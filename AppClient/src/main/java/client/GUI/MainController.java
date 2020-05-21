@@ -146,8 +146,12 @@ public class MainController implements Initializable,NotificationSubscriber {
             System.out.println("Error when searching "+e);
         }
     }
+    public void StopReceiver(){
+        receiver.stop();
+    }
     public void logout() {
             try {
+                StopReceiver();
                 server.logout(crtAngajat);
             }catch (ServerException e){
                 System.out.println("Error when loggin out"+e);
