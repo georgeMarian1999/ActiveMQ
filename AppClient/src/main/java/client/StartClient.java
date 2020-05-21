@@ -1,16 +1,25 @@
 package client;
 
+import Network.AMSProtocol.AMSServicesProxy;
 import Network.RPCProtocol.ClientServicesProxy;
 import Services.IServices;
+import Services.IServicesAMS;
+import Services.NotificationReceiver;
 import client.GUI.LoginController;
 import client.GUI.MainController;
+import client.GUI.NotificationReceiverImpl;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.Properties;
 
 public class StartClient extends Application {
@@ -21,7 +30,7 @@ public class StartClient extends Application {
 
 
     public void start(Stage primaryStage) throws Exception {
-        System.out.println("In start");
+        /*System.out.println("In start");
         Properties clientProps = new Properties();
         try {
             clientProps.load(StartClient.class.getResourceAsStream("/Client.properties"));
@@ -41,12 +50,14 @@ public class StartClient extends Application {
             System.out.println("Using default port: " + defaultChatPort);
         }
         System.out.println("Using server IP " + serverIP);
-        System.out.println("Using server port " + serverPort);
+        System.out.println("Using server port " + serverPort);*/
 
-        IServices server = new ClientServicesProxy(serverIP, serverPort);
+        //IServices server = new ClientServicesProxy(serverIP, serverPort);
 
-
-
+        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("spring-client.xml");
+        IServicesAMS server=context.getBean("Services", AMSServicesProxy.class);
+        NotificationReceiver receiver=context.getBean("notificationReceiver", NotificationReceiverImpl.class);
+        //MainController mainCtrl=context.getBean("MainView",MainController.class);
         FXMLLoader loader = new FXMLLoader(
                 getClass().getClassLoader().getResource("LoginView.fxml"));
         Parent root=loader.load();
@@ -54,19 +65,15 @@ public class StartClient extends Application {
 
         LoginController ctrl =
                 loader.<LoginController>getController();
-        ctrl.SetServer(server);
-
-
-
-
-        FXMLLoader cloader = new FXMLLoader(
-                getClass().getClassLoader().getResource("MainView.fxml"));
+        FXMLLoader cloader=new FXMLLoader(getClass().getClassLoader().getResource("MainView.fxml"));
         Parent croot=cloader.load();
 
 
-        MainController mainCtrl =
-                cloader.<MainController>getController();
+
+
+       MainController mainCtrl = cloader.<MainController>getController();
         mainCtrl.setServer(server);
+        mainCtrl.setReceiver(receiver);
 
         ctrl.SetMainCtrl(mainCtrl);
         ctrl.SetParent(croot);

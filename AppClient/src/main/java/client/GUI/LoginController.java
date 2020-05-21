@@ -3,6 +3,7 @@ package client.GUI;
 import Models.Angajat;
 import Models.DTOAngajat;
 import Services.IServices;
+import Services.IServicesAMS;
 import Services.ServerException;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -20,7 +21,8 @@ import javafx.stage.WindowEvent;
 
 
 public class LoginController {
-    private IServices server;
+    private IServicesAMS server;
+    //private Controller ctrl;
     private MainController mainCtrl;
     private DTOAngajat crtAngajat;
 
@@ -33,13 +35,20 @@ public class LoginController {
 
     Parent mainParent;
 
-    public void SetServer(IServices server1){
-        this.server=server1;
-    }
+
+
 
     public void SetParent(Parent parent1){
         mainParent=parent1;
     }
+
+    //public Controller getCtrl() {
+      //  return ctrl;
+    //}
+
+    //public void setCtrl(Controller ctrl) {
+      //  this.ctrl = ctrl;
+    //}
 
     public void SetMainCtrl(MainController ctrl){
         this.mainCtrl=ctrl;
@@ -60,7 +69,7 @@ public class LoginController {
         crtAngajat=new DTOAngajat(user,pass);
 
         try{
-            server.login(crtAngajat,mainCtrl);
+            mainCtrl.login(crtAngajat);
             Stage stage=new Stage();
             stage.setTitle("Main Window for "+crtAngajat.getUsername());
             stage.setScene(new Scene(mainParent));
@@ -73,8 +82,6 @@ public class LoginController {
                 }
                 });
             stage.show();
-            mainCtrl.setUser(crtAngajat);
-            //mainCtrl.setLoggedEmployess();
             mainCtrl.initialiazeTabels();
             mainCtrl.setCurseTabel();
             mainCtrl.setComboBox();

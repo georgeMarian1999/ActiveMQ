@@ -1,9 +1,8 @@
 package client.GUI;
 
 import Models.*;
-import Services.IObserver;
-import Services.IServices;
-import Services.ServerException;
+import Notification.Notification;
+import Services.*;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -19,14 +18,16 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-public class MainController implements Initializable,IObserver {
+public class MainController implements Initializable,NotificationSubscriber {
 
     ObservableList<DTOBJCursa> Curse= FXCollections.observableArrayList();
     ObservableList<DTOBJPartCapa> Participanti=FXCollections.observableArrayList();
     //ObservableList<Integer> tipuri=FXCollections.observableArrayList();
 
     private DTOAngajat crtAngajat;
-    private IServices server;
+    //private Controller controller;
+    private IServicesAMS server;
+    private NotificationReceiver receiver;
 
     @FXML
     Button LogoutButton;
@@ -64,10 +65,24 @@ public class MainController implements Initializable,IObserver {
 
 
 
-    ObservableList<DTOAngajat> others=FXCollections.observableArrayList();
 
-    public void setServer(IServices server1){
-        this.server=server1;
+    public void setServer(IServicesAMS server) {
+        this.server = server;
+    }
+
+    public void setReceiver(NotificationReceiver receiver) {
+        this.receiver = receiver;
+    }
+    public MainController(IServicesAMS servicesAMS){
+        this.server=servicesAMS;
+    }
+    public void login(DTOAngajat angajat)throws ServerException{
+        this.server.login(angajat);
+        this.crtAngajat=angajat;
+        startReceiver();
+    }
+    public void startReceiver(){
+        this.receiver.start(this);
     }
 
     public void setUser(DTOAngajat crtAngajat){
@@ -82,55 +97,26 @@ public class MainController implements Initializable,IObserver {
 
     }
 
-    public void setLoggedEmployess(){
-        try {
-            Angajat[] lEmp = server.getLoggedEmployees();
-            //UsernameCol.setCellValueFactory(new PropertyValueFactory<String,Integer>("username"));
-            for ( Angajat u : lEmp) {
-                others.add(u.convert());
-            }
-            //OthersEmp.setItems(others);
-
-        } catch (ServerException e) {
-            e.printStackTrace();
-        }
+    public MainController(){
 
     }
-
-
-    @Override
-    public void AngajatLoggedIn(DTOAngajat employee) throws ServerException {
-        Platform.runLater(() -> {
-            others.add(employee);
-            //OthersEmp.setItems(others);
-            System.out.println("Employee logged in"+employee);
-            System.out.println(others.size());
-        });
-
-    }
-
-    @Override
-    public void AngajatLoggedOut(DTOAngajat employee) throws ServerException {
-        Platform.runLater(() -> {
-            others.remove(employee);
-            //OthersEmp.setItems(others);
-            System.out.println("Employee logged out"+employee);
-        });
-
-    }
-
-
-
     public void AngajatSubmitted(DTOBJCursa[] result) throws ServerException {
         Platform.runLater(()->{
             System.out.println("S-a apelat AngajatSubmitted din MainCtrl");
             AddNewDataCurse(result);
-            //setCurseTabel();
         });
-
-
-
-
+    }
+    @FXML
+    public void handlesubmit(){
+        try{
+            Inscriere();
+        }catch (ServerException e){
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Error");
+            alert.setHeaderText("Submit failure");
+            alert.setContentText("An error occured :"+e.getMessage());
+            alert.showAndWait();
+        }
     }
     public void AddNewDataCurse(DTOBJCursa [] source){
         this.Curse.clear();
@@ -161,11 +147,11 @@ public class MainController implements Initializable,IObserver {
         }
     }
     public void logout() {
-        try {
-            server.logout(crtAngajat, this);
-        } catch (ServerException e) {
-            System.out.println("Logout error " + e);
-        }
+            try {
+                server.logout(crtAngajat);
+            }catch (ServerException e){
+                System.out.println("Error when loggin out"+e);
+            }
     }
 
     public void Inscriere()throws ServerException{
@@ -176,18 +162,6 @@ public class MainController implements Initializable,IObserver {
         System.out.println(numePart+" "+numeEchipa+" "+capacitate);
         DTOInfoSubmit submit=new DTOInfoSubmit(crtAngajat,capacitate,numePart,numeEchipa);
         this.server.submitInscriere(submit);
-    }
-
-    @FXML
-    public void handlesubmit(){
-        System.out.println("Se apeleaza Inscriere");
-        try{
-            Inscriere();
-            //setCurseTabel();
-            //handlesearch();
-        }catch (ServerException e){
-            System.out.println("Error when submitting from MainCtrl"+e);
-        }
 
 
     }
@@ -228,5 +202,19 @@ public class MainController implements Initializable,IObserver {
             tipuriCurse.add(c.getCapacitate());
         }
         CapBox.setItems(tipuriCurse);
+    }
+
+    @Override
+    public void notificationReceived(Notification notification) {
+        try{
+            AngajatSubmitted(notification.getData());
+        }catch (ServerException e){
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Error");
+            alert.setHeaderText("Refreshing failure");
+            alert.setContentText("An error occured :"+e.getMessage());
+            alert.showAndWait();
+        }
+
     }
 }

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+
+    <util:properties id="jdbcProps1">
+        <prop key="Curse.jdbc.driver">org.sqlite.JDBC</prop>
+        <prop key="Curse.jdbc.url">jdbc:sqlite:/Users/mariangeorge/Downloads/Curs2/DataBase/Laborator2.db</prop>
+    </util:properties>
+
+    <util:properties id="jdbcProps" location="classpath:bd.config"/>
+    <bean id="repoAngajat" class="Repos.Repositories.AngajatRepo">
+        <constructor-arg ref="jdbcProps"/>
+    </bean>
+    <bean id="repoCursa" class="Repos.Repositories.CursaRepo">
+        <constructor-arg ref="jdbcProps"/>
+    </bean>
+    <bean id="repoEchipa" class="Repos.Repositories.EchipaRepo">
+        <constructor-arg ref="jdbcProps"/>
+    </bean>
+    <bean id="repoParticipant" class="Repos.Repositories.ParticipantRepo">
+        <constructor-arg ref="jdbcProps"/>
+    </bean>
+
+    <bean id="repoInscriere" class="Repos.Repositories.InscriereRepo">
+        <constructor-arg ref="jdbcProps"/>
+    </bean>
+    <bean id="Service" class="Service.Service">
+        <constructor-arg ref="repoAngajat"/>
+        <constructor-arg ref="repoCursa"/>
+        <constructor-arg ref="repoEchipa"/>
+        <constructor-arg ref="repoParticipant"/>
+        <constructor-arg ref="repoInscriere"/>
+    </bean>
+    <bean id="connectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory"/>
+
+    <bean id="topic" class="org.apache.activemq.command.ActiveMQTopic">
+        <constructor-arg value="RaceTopic"/>
+    </bean>
+
+    <bean id="converter" class="org.springframework.jms.support.converter.MappingJackson2MessageConverter">
+        <property name="targetType" value="TEXT"/>
+        <property name="typeIdPropertyName" value="_notification"/>
+    </bean>
+
+    <bean id="jmsTemplate" class="org.springframework.jms.core.JmsTemplate">
+        <constructor-arg ref="connectionFactory"/>
+        <property name="defaultDestination" ref="topic"/>
+        <property name="messageConverter" ref="converter"/>
+    </bean>
+
+    <bean id="notificationService" class="server.NotificationServiceImpl">
+        <constructor-arg ref="jmsTemplate"/>
+    </bean>
+
+    <bean id="ServerImpl" class="server.ServicesAMSImpl">
+        <constructor-arg ref="Service"/>
+        <constructor-arg ref="notificationService"/>
+    </bean>
+    <util:properties id="serverProps" location="Server.properties"/>
+    <bean id="TCPServer" class="Network.Utils.RPCConcurrentServer">
+        <constructor-arg value="#{serverProps.getProperty('server.port')}"/>
+        <constructor-arg ref="ServerImpl"/>
+    </bean>
+
+
+
+</beans>

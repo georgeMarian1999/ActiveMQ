@@ -1,16 +1,18 @@
 package Network.Utils;
 
+import Network.AMSProtocol.AMSRPCWorker;
 import Network.RPCProtocol.ClientRPCWorker;
 import Services.IServices;
+import Services.IServicesAMS;
 import Services.ServerException;
 
 import java.net.Socket;
 
 public class RPCConcurrentServer extends AbstractConcurrentServer {
 
-    private IServices server;
+    private IServicesAMS server;
 
-    public RPCConcurrentServer(int port ,IServices server1){
+    public RPCConcurrentServer(int port ,IServicesAMS server1){
         super(port);
         this.server=server1;
         System.out.println("Building the concurrent server");
@@ -18,7 +20,7 @@ public class RPCConcurrentServer extends AbstractConcurrentServer {
 
     @Override
     protected Thread createWorker(Socket client) {
-        ClientRPCWorker worker=new ClientRPCWorker(server,client);
+        AMSRPCWorker worker=new AMSRPCWorker(server,client);
         Thread tw=new Thread(worker);
         return tw;
     }

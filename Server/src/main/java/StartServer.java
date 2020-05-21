@@ -3,6 +3,7 @@ import Network.Utils.RPCConcurrentServer;
 import Service.Service;
 import Services.IServices;
 import Services.ServerException;
+import org.graalvm.compiler.core.common.type.ArithmeticOpTable;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import server.ServicesImplementation;
@@ -12,13 +13,8 @@ import java.util.Properties;
 
 public class StartServer  {
     private static int defaultport=55555;
-    static Service getService(){
-        ApplicationContext context=new ClassPathXmlApplicationContext("BeanXML.xml");
-        Service service=context.getBean(Service.class);
-        return service;
-    }
     public static void main(String[] args){
-        Properties serverProps=new Properties();
+        /*Properties serverProps=new Properties();
         try{
             serverProps.load(StartServer.class.getResourceAsStream("Server.properties"));
             System.out.println("Server properties set");
@@ -47,7 +43,15 @@ public class StartServer  {
             }catch(ServerException e){
                 System.err.println("Error stopping server "+e.getMessage());
             }
+        }*/
+        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("spring-server.xml");
+        AbstractServer server=context.getBean("TCPServer",RPCConcurrentServer.class);
+        try{
+            server.start();
+        }catch(ServerException e){
+            System.out.println("Error starting the server");
         }
+
     }
 
 }
